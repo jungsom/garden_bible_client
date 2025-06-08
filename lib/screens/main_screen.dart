@@ -6,7 +6,6 @@ import '../screens/home_screen.dart';
 import '../screens/mypage_screen.dart';
 import '../widgets/login_form.dart';
 
-
 class MainScreen extends StatefulWidget {
   @override
   State<MainScreen> createState() => _MainScreenState();
