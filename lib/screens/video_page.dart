@@ -42,7 +42,8 @@ class VideoPage extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   onTap: () {
-                    final url = 'https://www.youtube.com/watch?v=${video['videoId']}';
+                    final url =
+                        'https://www.youtube.com/watch?v=${video['videoId']}';
                     launchUrl(Uri.parse(url));
                   },
                 ),

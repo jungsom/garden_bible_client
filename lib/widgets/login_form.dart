@@ -4,7 +4,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'register_form.dart';
 
-
 class LoginForm extends StatefulWidget {
   final VoidCallback onSuccess;
   LoginForm({required this.onSuccess});
