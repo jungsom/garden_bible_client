@@ -21,8 +21,6 @@ class _FriendPageState extends State<FriendPage> {
   @override
   void initState() {
     super.initState();
-    fetchRequested();
-    fetchAccepted();
     _checkLoginState();
   }
 
@@ -160,7 +158,18 @@ class _FriendPageState extends State<FriendPage> {
               ),
             ),
             SizedBox(height: 24),
-            Text("받은 친구 요청", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text("🫱 친구 신청", style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            if (requests.isEmpty)
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                alignment: Alignment.center,
+                child: Text(
+                  "받은 친구 신청이 없습니다.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
             ...requests.map(
               (f) => Container(
                 width: double.infinity,
@@ -204,7 +213,21 @@ class _FriendPageState extends State<FriendPage> {
               ),
             ),
             SizedBox(height: 24),
-            Text("내 친구", style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              "🧑‍🤝‍🧑 친구 목록",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            if (accepted.isEmpty)
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                alignment: Alignment.center,
+                child: Text(
+                  "아직 친구가 없습니다. 초대 코드를 통해 친구를 추가해보세요!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
             ...accepted.map(
               (f) => Container(
                 width: double.infinity,

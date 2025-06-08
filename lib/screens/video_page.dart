@@ -20,38 +20,106 @@ class VideoPage extends StatelessWidget {
 
           final videos = snapshot.data!;
 
-          return ListView.builder(
-            itemCount: videos.length,
-            itemBuilder: (context, index) {
-              final video = videos[index];
-              return Card(
-                margin: EdgeInsets.all(12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  leading: Image.network(
-                    video['thumbnail'],
-                    width: 100,
-                    fit: BoxFit.cover,
-                  ),
-                  title: Text(video['title']),
-                  subtitle: Text(
-                    video['description'],
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  onTap: () {
-                    final url =
-                        'https://www.youtube.com/watch?v=${video['videoId']}';
-                    launchUrl(Uri.parse(url));
-                  },
-                ),
-              );
-            },
+          // 섹션 나누기
+          final section1 = videos.take(4).toList();
+          final section2 = videos.skip(4).take(4).toList();
+
+          return ListView(
+            padding: EdgeInsets.all(12),
+            children: [
+              SectionHeader(title: '유튜브 영상 바로가기'),
+              VideoGridSection(videos: section1),
+              SectionHeader(title: '다음 영상들'),
+              VideoGridSection(videos: section2),
+            ],
           );
         },
       ),
+    );
+  }
+}
+
+class SectionHeader extends StatelessWidget {
+  final String title;
+  const SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Text(
+        title,
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+}
+
+class VideoGridSection extends StatelessWidget {
+  final List<Map<String, dynamic>> videos;
+  const VideoGridSection({required this.videos});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      itemCount: videos.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.75,
+      ),
+      itemBuilder: (context, index) {
+        final video = videos[index];
+        return GestureDetector(
+          onTap: () {
+            final url = 'https://www.youtube.com/watch?v=${video['videoId']}';
+            launchUrl(Uri.parse(url));
+          },
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                  child: Image.network(
+                    video['thumbnail'],
+                    width: double.infinity,
+                    height: 120,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        video['title'],
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        video['description'],
+                        style: TextStyle(fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

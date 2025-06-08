@@ -14,6 +14,7 @@ class BibleScreen extends StatefulWidget {
 class _BibleScreenState extends State<BibleScreen> {
   int selectedBookIndex = 0; // 0부터 시작 (book=1로 보낼 것)
   int selectedChapter = 1;
+  final storage = FlutterSecureStorage();
 
   final List<String> books = [
     '창세기',
@@ -83,11 +84,13 @@ class _BibleScreenState extends State<BibleScreen> {
     '유다서',
     '요한계시록',
   ];
+
   late Future<List<BibleVerse>> _versesFuture;
 
   @override
   void initState() {
     super.initState();
+    fetchBookmarkedVerses();
     _versesFuture = ApiService.fetchBibleChapter(
       selectedBookIndex + 1,
       selectedChapter,
@@ -97,6 +100,45 @@ class _BibleScreenState extends State<BibleScreen> {
   void _loadVerses() {
     final bookId = selectedBookIndex + 1;
     _versesFuture = ApiService.fetchBibleChapter(bookId, selectedChapter);
+    fetchBookmarkedVerses();
+  }
+
+  Set<String> bookmarkedSet = {}; // book:chapter:verse
+
+  Future<void> fetchBookmarkedVerses() async {
+    final token = await storage.read(key: 'accessToken');
+    final response = await http.get(
+      Uri.parse('http://localhost:8080/bookmark/list'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      setState(() {
+        bookmarkedSet =
+            data
+                .map((e) => "${e['book']}:${e['chapter']}:${e['verse']}")
+                .toSet();
+      });
+    }
+  }
+
+  Future<void> toggleBookmark(int verseNumber) async {
+    final token = await storage.read(key: 'accessToken');
+    final response = await http.post(
+      Uri.parse('http://localhost:8080/bookmark'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'book': selectedBookIndex + 1,
+        'chapter': selectedChapter,
+        'verse': verseNumber,
+      }),
+    );
+    if (response.statusCode == 200) {
+      await fetchBookmarkedVerses(); // 북마크 다시 불러오기
+    }
   }
 
   @override
@@ -180,26 +222,54 @@ class _BibleScreenState extends State<BibleScreen> {
                 padding: const EdgeInsets.all(16),
                 itemCount: verses.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "${index + 1} ",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.indigo,
+                  final verse = verses[index];
+                  final isBookmarked = bookmarkedSet.contains(
+                    "${selectedBookIndex + 1}:${selectedChapter}:${verse.id.verse}",
+                  );
+                  return GestureDetector(
+                    onTap: () async {
+                      final key =
+                          "${selectedBookIndex + 1}:${selectedChapter}:${verse.id.verse}";
+                      setState(() {
+                        if (bookmarkedSet.contains(key)) {
+                          bookmarkedSet.remove(key);
+                        } else {
+                          bookmarkedSet.add(key);
+                        }
+                      });
+                      await toggleBookmark(verse.id.verse);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 7),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color:
+                            isBookmarked
+                                ? Colors.yellow[100]
+                                : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.center, // ✅ 핵심: 중앙 정렬
+                        children: [
+                          Text(
+                            "${verse.id.verse}",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo,
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            verses[index].content,
-                            style: TextStyle(fontSize: 16, height: 1.5),
+                          SizedBox(width: 12), // ✅ 핵심: 간격 확보
+                          Expanded(
+                            child: Text(
+                              verse.content,
+                              style: TextStyle(fontSize: 16, height: 1.5),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },

@@ -1,9 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatelessWidget {
-  final String verseText = "내가 너희 주와 선생이 되어 너희 발을 씻어 주었으니 너희도 서로 발을 씻어 주어야 한다.";
-  final String verseRef = "(요한복음 13:14 KLB)";
+  Future<Map<String, String>> fetchTodayVerse() async {
+    final int day = DateTime.now().day;
+    final int psalmChapter = (day % 150) + 1;
+
+    final response = await http.get(
+      Uri.parse('http://localhost:8080/bible?book=19&chapter=$psalmChapter'),
+    );
+
+    if (response.statusCode == 200) {
+      final verses = jsonDecode(response.body);
+      final index = DateTime.now().day % verses.length;
+      final verse = verses[index];
+
+      return {
+        'text': verse['content'],
+        'ref': "(시편 ${verse['id']['chapter']}:${verse['id']['verse']})",
+      };
+    } else {
+      throw Exception("말씀을 불러올 수 없습니다");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final String date = DateFormat('yyyy년 MM월 dd일').format(DateTime.now());
@@ -49,44 +71,59 @@ class HomeScreen extends StatelessWidget {
           SizedBox(height: 24),
 
           /// 오늘의 말씀 카드
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: _sharedCardDecoration(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          FutureBuilder<Map<String, String>>(
+            future: fetchTodayVerse(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError || !snapshot.hasData) {
+                return Text("말씀을 불러올 수 없습니다");
+              }
+
+              final verseText = snapshot.data!['text']!;
+              final verseRef = snapshot.data!['ref']!;
+
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: _sharedCardDecoration(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.auto_stories, color: Colors.indigo),
-                    SizedBox(width: 8),
-                    Text(
-                      "오늘의 말씀",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        Icon(Icons.auto_stories, color: Colors.indigo),
+                        SizedBox(width: 8),
+                        Text(
+                          "오늘의 말씀",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.black87,
+                          height: 1.6,
+                        ),
+                        children: [
+                          TextSpan(text: verseText),
+                          TextSpan(
+                            text: '\n$verseRef',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 12),
-                RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.black87,
-                      height: 1.6,
-                    ),
-                    children: [
-                      TextSpan(text: verseText),
-                      TextSpan(
-                        text: '\n$verseRef',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),

@@ -75,4 +75,17 @@ class ApiService {
       throw Exception('유튜브 영상 요청 실패: ${response.statusCode}');
     }
   }
+
+  static Future<void> toggleBookmark(int book, int chapter, int verse) async {
+    final storage = FlutterSecureStorage();
+    final token = await storage.read(key: 'accessToken');
+    await http.post(
+      Uri.parse('http://localhost:8080/bookmark'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'book': book, 'chapter': chapter, 'verse': verse}),
+    );
+  }
 }
