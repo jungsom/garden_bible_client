@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/bible_verse.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
   static final storage = FlutterSecureStorage();
   static final baseUrl = 'http://localhost:8080';
+  static final apiKey = dotenv.env['YOUTUBE_API_KEY'];
 
   /// ✅ 성경 구절 조회
   static Future<List<BibleVerse>> fetchBibleChapter(
@@ -43,7 +45,7 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> fetchVideos() async {
     final response = await http.get(
       Uri.parse(
-        'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=PLezNmjF2Hxb1a5AObDqogTk5zIkwK0-pF&maxResults=10&key=AIzaSyBLTgL-7y2q2Ka3IHtA0mPBNQVoROTnZCQ',
+        'https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=PLezNmjF2Hxb1a5AObDqogTk5zIkwK0-pF&maxResults=10&key=$apiKey',
       ),
     );
 
